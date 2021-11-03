@@ -17,7 +17,7 @@ Theta11 = 0; %deg
 R1 = 203.20; %mm
 R2 = 57.15; %mm
 R3 = 184.15; %mm
-R4 = 177.80; %mm
+R4 = 177.8; %mm
 R5 = 50.80; %mm
 R6 = 127.00; %mm
 R11 = 101.60; %mm
@@ -99,7 +99,7 @@ for i = 1:360
     elseif (Theta5star < 0)
         Theta5star = Theta5star + 360;
     end
-    
+    disp(Theta5star)
     Det_2(i) = R5 .* R6 .* sind(Theta5star - Theta6star); %deg
     
     Theta5(i) = Theta5star;
@@ -114,8 +114,13 @@ for i = 1:360
     Theta3prime(i) = (R2 .* sind(Theta2 - Theta4(i))) ./ (R3 .* sind(Theta4(i) - Theta3(i))); %rad
     Theta4prime(i) = (R2 .* sind(Theta2 - Theta3(i))) ./ (R4 .* sind(Theta4(i) - Theta3(i))); %rad
     
-    Theta5prime(i) = (R44 .* Theta4prime(i) .* sind(Theta4(i) - Theta6(i))) ./ (R5 .* sind(-Theta5(i) + Theta6(i))); %rad
-    Theta6prime(i) = (R44 .* Theta4prime(i) .* sind(Theta5(i) - Theta6(i))) ./ (R6 .* sind(-Theta5(i) + Theta6(i))); %rad
+    A = [R5 * sind(Theta5(i)), -R6 * sind(Theta6(i)); -R5 * cosd(Theta5(i)), R6 * cosd(Theta6(i))];
+    B = [-R44 * sind(Theta4(i)) * Theta4prime(i); R44 * cosd(Theta4(i)) * Theta4prime(i)];
+    X = linsolve(A,B);
+    Theta5prime(i) = X(1);
+    Theta6prime(i) = X(2);
+%     Theta5prime(i) = (R44 .* Theta4prime(i) .* sind(Theta4(i) - Theta6(i))) ./ (R5 .* sind(-Theta5(i) + Theta6(i))); %rad
+%     Theta6prime(i) = (R44 .* Theta4prime(i) .* sind(Theta5(i) - Theta6(i))) ./ (R6 .* sind(-Theta5(i) + Theta6(i))); %rad
     
     SecondOrdDet1 = R3 * R4 * sind(Theta3(i) - Theta4(i));
     SecondOrdDet2 = R5 * R6 * sind(Theta5(i) - Theta6(i));
@@ -145,8 +150,10 @@ for i = 1:360
     %% Path Analysis
     Rpprime(i) = sqrt(Xprime(i) ^ 2 + Yprime(i) ^ 2);
     
-    Ut(i) = (Xprime(i) + Yprime(i)) / Rpprime(i);
-    Un(i) = (Xprime(i) - Yprime(i)) / Rpprime(i);
+    Utx(i) = Xprime(i) / Rpprime(i);
+    Uty(i) = Yprime(i) / Rpprime(i);
+    Uny(i) = Xprime(i) / Rpprime(i);
+    Unx(i) = -Yprime(i) / Rpprime(i);
     
     Rhop(i) = (Rpprime(i) ^ 3) / (Xprime(i) * Ydprime(i) - Yprime(i) * Xdprime(i));
     
@@ -164,4 +171,4 @@ writematrix([transpose(Xp) transpose(Yp)],'Position.txt')
 writematrix([transpose(Xprime) transpose(Yprime)],'PointPFirstOrderCoefficients.txt')
 writematrix([transpose(Xdprime) transpose(Ydprime)],'PointPSecondOrderCoefficients.txt')
 
-writematrix([transpose(Ut) transpose(Un) transpose(Rhop) transpose(Xcc) transpose(Ycc)],'PathAnalysis.txt')
+writematrix([transpose(Utx) transpose(Uty) transpose(Unx) transpose(Uny) transpose(Rhop) transpose(Xcc) transpose(Ycc)],'PathAnalysis.txt')
